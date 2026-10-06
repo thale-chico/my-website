@@ -1,0 +1,168 @@
+---
+title: "AE04 - Getting to Know Your Data Types"
+author: "Tristen Hale"
+date: today
+format: html
+execute:
+  warning: false
+  message: false
+---
+
+## Setup
+
+```{r}
+#| label: packages
+library(tidyverse)
+library(googlesheets4)
+```
+
+
+## Step 1: Import
+
+```{r}
+#| label: import
+
+raw <- read_sheet("https://docs.google.com/spreadsheets/d/1e8XSidxeT3SIE10g1jiEuALRa7REpmYU64_3V3TNKKs/edit?usp=sharing") %>%
+  rename(
+    timestamp       = Timestamp,
+    zipcode         = `What is the zipcode of your hometown?`,
+    stats_before    = `Have you taken any statistics courses before?`,
+    prog_experience = `How much experience do you have with programming?`,
+    languages       = `If you've programmed before, which languages have you used, and how comfortable do you feel with each? If you haven't programmed before, please leave this question blank.`,
+    data_interest   = `What types of data interest you?`,
+    learn_best      = `How do you learn best?`,
+    commute_min     = `How long does it take you to commute from home to this classroom, in minutes? Please enter a number only.`
+  )
+```
+
+## Step 2: Data type audit
+
+#### _"How long does it take you to commute from home to this classroom, in minutes? Please enter a number only."_
+
+```{r}
+#| label: type-check-commute
+
+typeof(raw$commute_min)
+```
+
+Is that what you'd expect, given the question?
+
+```{r}
+#| label: commute-mean-broken
+
+mean(raw$commute_min)
+```
+Looking at the question, it is asking for a number, but we are getting a list. If we wanted to do the mean on these values, they would need to be numeric.  
+
+
+What's going on? `unlist()` this variable and look at the `unique()` values.
+
+```{r}
+#| label: commute-unique
+
+unique(unlist(raw$commute_min))
+```
+The list contains a few unique values. One of which is not a numeric value and is likely the cause for our data being a list. "forever" would need to be filtered out, and all other values converted to numeric. 
+
+
+#### _"How much experience do you have with programming?"_
+
+```{r}
+#| label: type-check-prog
+
+typeof(raw$prog_experience)
+```
+
+Is this variable ordinal? Does everything you'd expect to see actually show up?
+
+The type of the `prog_experiance` variable is not a ordinal variable, but it should be. Considering we are pulling from the web, it makes sense that these answers are strings, lists, etc, which is why they need cleaned up. 
+
+#### Skim the rest
+
+```{r}
+#| label: skim-rest
+
+glimpse(raw)
+```
+
+For each of the other variables — is R's type what you'd expect, given the question that was asked? We won't work with them further in this AE, but you should still be able to answer this for each one.
+
+The variables are not in the formats that you would expect. From the examples above, we have examples of incorrect formatting, and we can assume this is true for the rest of the data. 
+
+## Step 3: Apply fixes
+
+#### Commute time
+
+While we could try to coerce list → character → numeric, it's easier here to specify data types on read.
+
+```{r}
+#| label: readsurvey-specify-coltypes
+
+survey <- read_sheet("https://docs.google.com/spreadsheets/d/1e8XSidxeT3SIE10g1jiEuALRa7REpmYU64_3V3TNKKs/edit?usp=sharing",
+                     col_types = c("Dccccccn")) %>%
+  rename(
+    timestamp       = Timestamp,
+    zipcode         = `What is the zipcode of your hometown?`,
+    stats_before    = `Have you taken any statistics courses before?`,
+    prog_experience = `How much experience do you have with programming?`,
+    languages       = `If you've programmed before, which languages have you used, and how comfortable do you feel with each? If you haven't programmed before, please leave this question blank.`,
+    data_interest   = `What types of data interest you?`,
+    learn_best      = `How do you learn best?`,
+    commute_min     = `How long does it take you to commute from home to this classroom, in minutes? Please enter a number only.`
+  )
+```
+
+Always keep an eye out for this, and ask yourself whether it's expected, given what you found in Step 2.
+
+```{r}
+#| label: commute-values
+
+table(survey$commute_min)
+```
+
+#### Recode & reorder `prog_experience`
+
+1. First, confirm what's actually in the data.
+
+```{r}
+#| label: prog-distinct
+
+table(raw$prog_experience)
+```
+
+2. Then compare against the published [survey](https://forms.gle/ktGiD3R4dGNabASx7). Is everything you'd expect to see actually there?
+
+We are missing the value "A little — I’ve written a few lines or done small exercises". This should be labeled as "0" if this answer was not selected. 
+
+3. Convert the variable to a factor with the current recorded levels.
+
+```{r}
+#| label: prog-recode
+
+progexp <-
+  factor(raw$prog_experience, 
+         levels = c(
+            "None",
+            "Some — I’ve worked on a few projects or used it occasionally",
+            "A lot — I use programming regularly and feel confident writing code"
+         ))
+
+table(progexp)
+```
+
+4. Now that it's reading as a factor, use `fct_expand()` to add any level that's missing.
+
+```{r}
+#| label: prog-expand
+
+progexp <- fct_expand(progexp, "A little — I’ve written a few lines or done small exercises", after = 1)
+
+table(progexp)
+```
+
+5. Last, respect the ordinal nature of this variable by putting the levels in increasing order.
+
+```{r}
+#| label: prog-relevel
+# CODE ABOVE
+```

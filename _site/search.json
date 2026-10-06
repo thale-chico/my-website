@@ -1,0 +1,76 @@
+[
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "Tristen Hale is the one who made this website."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Home",
+    "section": "",
+    "text": "The website example I liked was Python for Data Science because it seems to be very in-depth and easy to understand."
+  },
+  {
+    "objectID": "ae4.html",
+    "href": "ae4.html",
+    "title": "AE04 - Getting to Know Your Data Types",
+    "section": "",
+    "text": "library(tidyverse)\nlibrary(googlesheets4)",
+    "crumbs": [
+      "Home",
+      "Application Exercises",
+      "AE 04 - Data Types"
+    ]
+  },
+  {
+    "objectID": "ae4.html#setup",
+    "href": "ae4.html#setup",
+    "title": "AE04 - Getting to Know Your Data Types",
+    "section": "",
+    "text": "library(tidyverse)\nlibrary(googlesheets4)",
+    "crumbs": [
+      "Home",
+      "Application Exercises",
+      "AE 04 - Data Types"
+    ]
+  },
+  {
+    "objectID": "ae4.html#step-1-import",
+    "href": "ae4.html#step-1-import",
+    "title": "AE04 - Getting to Know Your Data Types",
+    "section": "Step 1: Import",
+    "text": "Step 1: Import\n\nraw &lt;- read_sheet(\"https://docs.google.com/spreadsheets/d/1e8XSidxeT3SIE10g1jiEuALRa7REpmYU64_3V3TNKKs/edit?usp=sharing\") %&gt;%\n  rename(\n    timestamp       = Timestamp,\n    zipcode         = `What is the zipcode of your hometown?`,\n    stats_before    = `Have you taken any statistics courses before?`,\n    prog_experience = `How much experience do you have with programming?`,\n    languages       = `If you've programmed before, which languages have you used, and how comfortable do you feel with each? If you haven't programmed before, please leave this question blank.`,\n    data_interest   = `What types of data interest you?`,\n    learn_best      = `How do you learn best?`,\n    commute_min     = `How long does it take you to commute from home to this classroom, in minutes? Please enter a number only.`\n  )",
+    "crumbs": [
+      "Home",
+      "Application Exercises",
+      "AE 04 - Data Types"
+    ]
+  },
+  {
+    "objectID": "ae4.html#step-2-data-type-audit",
+    "href": "ae4.html#step-2-data-type-audit",
+    "title": "AE04 - Getting to Know Your Data Types",
+    "section": "Step 2: Data type audit",
+    "text": "Step 2: Data type audit\n\n“How long does it take you to commute from home to this classroom, in minutes? Please enter a number only.”\n\ntypeof(raw$commute_min)\n\n[1] \"list\"\n\n\nIs that what you’d expect, given the question?\n\nmean(raw$commute_min)\n\n[1] NA\n\n\nLooking at the question, it is asking for a number, but we are getting a list. If we wanted to do the mean on these values, they would need to be numeric.\nWhat’s going on? unlist() this variable and look at the unique() values.\n\nunique(unlist(raw$commute_min))\n\n [1] \"10\"      \"7\"       \"15\"      \"21\"      \"35\"      \"25\"      \"30\"     \n [8] \"70\"      \"20\"      \"16\"      \"22\"      \"forever\"\n\n\nThe list contains a few unique values. One of which is not a numeric value and is likely the cause for our data being a list. “forever” would need to be filtered out, and all other values converted to numeric.\n\n\n“How much experience do you have with programming?”\n\ntypeof(raw$prog_experience)\n\n[1] \"character\"\n\n\nIs this variable ordinal? Does everything you’d expect to see actually show up?\nThe type of the prog_experiance variable is not a ordinal variable, but it should be. Considering we are pulling from the web, it makes sense that these answers are strings, lists, etc, which is why they need cleaned up.\n\n\nSkim the rest\n\nglimpse(raw)\n\nRows: 30\nColumns: 8\n$ timestamp       &lt;dttm&gt; 2026-08-24 15:32:06, 2026-08-24 15:32:19, 2026-08-24 …\n$ zipcode         &lt;dbl&gt; 95618, 95129, 95932, 94526, 95973, 94550, 96080, 94510…\n$ stats_before    &lt;chr&gt; \"Yes, I have taken another college course on statistic…\n$ prog_experience &lt;chr&gt; \"A lot — I use programming regularly and feel confiden…\n$ languages       &lt;chr&gt; \"C/C++ (very comfortable), Python (somewhat comfortabl…\n$ data_interest   &lt;chr&gt; \"- Crime, - Economics, - Environment/Climate, - Politi…\n$ learn_best      &lt;chr&gt; \"Engaging lectures\", \"In person classes and lectures\",…\n$ commute_min     &lt;list&gt; 10, 7, 10, 10, 15, 21, 35, 25, 15, &lt;NULL&gt;, 30, 15, 70…\n\n\nFor each of the other variables — is R’s type what you’d expect, given the question that was asked? We won’t work with them further in this AE, but you should still be able to answer this for each one.\nThe variables are not in the formats that you would expect. From the examples above, we have examples of incorrect formatting, and we can assume this is true for the rest of the data.",
+    "crumbs": [
+      "Home",
+      "Application Exercises",
+      "AE 04 - Data Types"
+    ]
+  },
+  {
+    "objectID": "ae4.html#step-3-apply-fixes",
+    "href": "ae4.html#step-3-apply-fixes",
+    "title": "AE04 - Getting to Know Your Data Types",
+    "section": "Step 3: Apply fixes",
+    "text": "Step 3: Apply fixes\n\nCommute time\nWhile we could try to coerce list → character → numeric, it’s easier here to specify data types on read.\n\nsurvey &lt;- read_sheet(\"https://docs.google.com/spreadsheets/d/1e8XSidxeT3SIE10g1jiEuALRa7REpmYU64_3V3TNKKs/edit?usp=sharing\",\n                     col_types = c(\"Dccccccn\")) %&gt;%\n  rename(\n    timestamp       = Timestamp,\n    zipcode         = `What is the zipcode of your hometown?`,\n    stats_before    = `Have you taken any statistics courses before?`,\n    prog_experience = `How much experience do you have with programming?`,\n    languages       = `If you've programmed before, which languages have you used, and how comfortable do you feel with each? If you haven't programmed before, please leave this question blank.`,\n    data_interest   = `What types of data interest you?`,\n    learn_best      = `How do you learn best?`,\n    commute_min     = `How long does it take you to commute from home to this classroom, in minutes? Please enter a number only.`\n  )\n\nAlways keep an eye out for this, and ask yourself whether it’s expected, given what you found in Step 2.\n\ntable(survey$commute_min)\n\n\n 7 10 15 16 20 21 22 25 30 35 70 \n 1  6  7  1  2  1  1  1  3  3  2 \n\n\n\n\nRecode & reorder prog_experience\n\nFirst, confirm what’s actually in the data.\n\n\ntable(raw$prog_experience)\n\n\nA lot — I use programming regularly and feel confident writing code \n                                                                 11 \n                                                               None \n                                                                  1 \n       Some — I’ve worked on a few projects or used it occasionally \n                                                                 18 \n\n\n\nThen compare against the published survey. Is everything you’d expect to see actually there?\n\nWe are missing the value “A little — I’ve written a few lines or done small exercises”. This should be labeled as “0” if this answer was not selected.\n\nConvert the variable to a factor with the current recorded levels.\n\n\nprogexp &lt;-\n  factor(raw$prog_experience, \n         levels = c(\n            \"None\",\n            \"Some — I’ve worked on a few projects or used it occasionally\",\n            \"A lot — I use programming regularly and feel confident writing code\"\n         ))\n\ntable(progexp)\n\nprogexp\n                                                               None \n                                                                  1 \n       Some — I’ve worked on a few projects or used it occasionally \n                                                                 18 \nA lot — I use programming regularly and feel confident writing code \n                                                                 11 \n\n\n\nNow that it’s reading as a factor, use fct_expand() to add any level that’s missing.\n\n\nprogexp &lt;- fct_expand(progexp, \"A little — I’ve written a few lines or done small exercises\", after = 1)\n\ntable(progexp)\n\nprogexp\n                                                               None \n                                                                  1 \n        A little — I’ve written a few lines or done small exercises \n                                                                  0 \n       Some — I’ve worked on a few projects or used it occasionally \n                                                                 18 \nA lot — I use programming regularly and feel confident writing code \n                                                                 11 \n\n\n\nLast, respect the ordinal nature of this variable by putting the levels in increasing order.\n\n\n# CODE ABOVE",
+    "crumbs": [
+      "Home",
+      "Application Exercises",
+      "AE 04 - Data Types"
+    ]
+  }
+]

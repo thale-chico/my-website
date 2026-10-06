@@ -1,0 +1,5 @@
+---
+title: "Home"
+---
+
+The website example I liked was [Python for Data Science](https://pythonds.linogaliana.fr/en/) because it seems to be very in-depth and easy to understand. 
